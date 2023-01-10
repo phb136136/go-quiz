@@ -67,7 +67,7 @@ func main() {
 	// convert records to array of structs
 	questions := storeQuestions(data)
 
-	// print the array
+	// print the array testing this works
 	// fmt.Printf("%+v\n", questions)
 	runQuestions(questions)
 }
