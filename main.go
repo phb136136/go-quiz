@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 type Question struct {
@@ -49,6 +50,8 @@ func runQuestions(questions []Question) {
 func main() {
 	// open file
 	filename := "problems.csv"
+	timeLimitSeconds := 15
+
 	f, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -69,5 +72,19 @@ func main() {
 
 	// print the array testing this works
 	// fmt.Printf("%+v\n", questions)
-	runQuestions(questions)
+	// runQuestions(questions)
+
+	// Using go channels
+	c2 := make(chan string, 1)
+	go func() {
+		runQuestions(questions)
+		c2 <- "result 2"
+	}()
+
+	select {
+	case res := <-c2:
+		fmt.Println("FINISHED: YOU WIN")
+	case <-time.After(time.Duration(timeLimitSeconds) * time.Second):
+		fmt.Println("timeout: you LOST")
+	}
 }
