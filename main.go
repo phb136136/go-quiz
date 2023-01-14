@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -43,7 +43,9 @@ func randomiseQuestions(questions []Question) {
 
 func runQuestions(questions []Question) {
 	var numCorrect, numWrong int = 0, 0
-	randomiseQuestions(questions)
+	if isRandomised {
+		randomiseQuestions(questions)
+	}
 	for _, qs := range questions {
 		var userInput string
 		fmt.Printf("%s\n", qs.Ask)
@@ -65,10 +67,20 @@ func runQuestions(questions []Question) {
 	fmt.Printf("You got %d answers correct out of a total of %d questions\n", numCorrect, numWrong+numCorrect)
 }
 
+var timeLimitSeconds int
+var isRandomised bool
+
+func init() {
+	flag.IntVar(&timeLimitSeconds, "timelimit", 30, "time limit in seconds")
+	flag.BoolVar(&isRandomised, "randomised", false, "Checks whether the questions should be sorted")
+}
+
 func main() {
+	// Parsing flag
+	flag.Parse()
+
 	// open file
 	filename := "problems.csv"
-	timeLimitSeconds := 15
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -87,17 +99,6 @@ func main() {
 
 	// convert records to array of structs
 	questions := storeQuestions(data)
-
-	// print the array testing this works
-	// fmt.Printf("%+v\n", questions)
-	if len(os.Args) > 1 {
-		timeout, err := strconv.Atoi(os.Args[1])
-		if err != nil {
-			fmt.Println("Error during conversion")
-			return
-		}
-		timeLimitSeconds = timeout
-	}
 
 	var waitStart string
 	fmt.Println("Press any key to start")
