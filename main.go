@@ -4,7 +4,10 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,6 +16,7 @@ type Question struct {
 	Answer string
 }
 
+// Parses the csv and stores the data
 func storeQuestions(data [][]string) []Question {
 	var questions []Question
 	for i, line := range data {
@@ -29,7 +33,17 @@ func storeQuestions(data [][]string) []Question {
 	return questions
 }
 
+// Randomises the questions
+func randomiseQuestions(questions []Question) {
+	rand.Shuffle(len(questions), func(i, j int) {
+		questions[i], questions[j] = questions[j], questions[i]
+	})
+
+}
+
 func runQuestions(questions []Question) {
+	var numCorrect, numWrong int = 0, 0
+	randomiseQuestions(questions)
 	for _, qs := range questions {
 		var userInput string
 		fmt.Printf("%s\n", qs.Ask)
@@ -38,13 +52,17 @@ func runQuestions(questions []Question) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if userInput != qs.Answer {
-			fmt.Printf("User gave the wrong answer\n")
-			fmt.Printf("Expected: %s, Got: %s\n", qs.Answer, userInput)
-			break
+		if strings.ToLower(strings.TrimSpace(userInput)) == qs.Answer {
+			numCorrect++
+		} else {
+			numWrong++
+			// fmt.Printf("User gave the wrong answer\n")
+			// fmt.Printf("Expected: %s, Got: %s\n", qs.Answer, userInput)
+			// break
 		}
 
 	}
+	fmt.Printf("You got %d answers correct out of a total of %d questions\n", numCorrect, numWrong+numCorrect)
 }
 
 func main() {
@@ -72,7 +90,21 @@ func main() {
 
 	// print the array testing this works
 	// fmt.Printf("%+v\n", questions)
-	// runQuestions(questions)
+	if len(os.Args) > 1 {
+		timeout, err := strconv.Atoi(os.Args[1])
+		if err != nil {
+			fmt.Println("Error during conversion")
+			return
+		}
+		timeLimitSeconds = timeout
+	}
+
+	var waitStart string
+	fmt.Println("Press any key to start")
+	_, error := fmt.Scan(&waitStart)
+	if error != nil {
+		log.Fatal(error)
+	}
 
 	// Using go channels
 	c2 := make(chan string, 1)
@@ -82,7 +114,7 @@ func main() {
 	}()
 
 	select {
-	case res := <-c2:
+	case <-c2:
 		fmt.Println("FINISHED: YOU WIN")
 	case <-time.After(time.Duration(timeLimitSeconds) * time.Second):
 		fmt.Println("timeout: you LOST")
